@@ -16,6 +16,26 @@ builder.Services.AddDbContext<MessageBoardContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
+    
+// Add CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevelopmentCors", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000")  // Your frontend URL
+              .AllowAnyMethod()                       // GET, POST, PUT, DELETE, etc.
+              .AllowAnyHeader()                       // Any request headers
+              .AllowCredentials();                    // Allow cookies/auth headers
+    });
+
+    // options.AddPolicy("ProductionCors", policy =>
+    // {
+    //     policy.WithOrigins("https://yourdomain.com", "https://www.yourdomain.com")
+    //           .WithMethods("GET", "POST", "PUT", "DELETE")
+    //           .WithHeaders("Content-Type", "Authorization")
+    //           .AllowCredentials();
+    // });
+});
 
 var app = builder.Build();
 
@@ -23,6 +43,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseCors("DevelopmentCors");  // Use CORS in development
 }
 
 app.UseHttpsRedirection();
