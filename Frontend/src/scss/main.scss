@@ -1,0 +1,13 @@
+// Import Bootstrap
+@use '~bootstrap/scss/bootstrap';
+
+// Custom styles
+body {
+    background-color: #f8f9fa;
+}
+
+#app {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 2rem;
+}
