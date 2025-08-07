@@ -1,17 +1,22 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
-    "moduleResolution": "node",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true
+    "target": "ES2020",                     // What JavaScript version to output
+    "module": "ES2020",                     // What module system to use
+    "moduleResolution": "node",             // How to resolve imports
+    "strict": true,                         // Enable all strict type checking
+    "esModuleInterop": true,                // Better CommonJS compatibility
+    "skipLibCheck": true,                   // Skip type checking of .d.ts files
+    "forceConsistentCasingInFileNames": true,  // Enforce consistent file naming
+    "outDir": "./dist",                     // Where compiled JS goes
+    "rootDir": "./src",                     // Where source files are
+    "declaration": true,                    // Generate .d.ts files
+    "declarationMap": true,                 // Generate .d.ts.map files
+    "sourceMap": true,                      // Generate .js.map files for debugging
+    "noUnusedLocals": true,                 // Warn about unused variables
+    "noUnusedParameters": true,             // Warn about unused function params
+    "exactOptionalPropertyTypes": true,     // Stricter optional properties
+    "noImplicitReturns": true,              // Every code path must return
+    "lib": ["ES2020", "DOM", "DOM.Iterable"]  // Include DOM types
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -1,33 +1,38 @@
-using MessageBoard.API.Data;           // ADD THIS
-using Microsoft.EntityFrameworkCore;   // ADD THIS
+using MessageBoard.API.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// ADD CONTROLLERS (you'll need these)
-builder.Services.AddControllers();
+// Configure JSON options to handle circular references
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.WriteIndented = true; // Makes JSON readable
+    });
 
-// ADD ENTITY FRAMEWORK
+// Add Entity Framework
 builder.Services.AddDbContext<MessageBoardContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
     ));
-    
-// Add CORS
+
+// Add CORS - UPDATE THIS TO PORT 5285
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevelopmentCors", policy =>
     {
         policy.WithOrigins("http://localhost:3000")  // Your frontend URL
-              .AllowAnyMethod()                       // GET, POST, PUT, DELETE, etc.
-              .AllowAnyHeader()                       // Any request headers
-              .AllowCredentials();                    // Allow cookies/auth headers
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
-
+    
     // options.AddPolicy("ProductionCors", policy =>
     // {
     //     policy.WithOrigins("https://yourdomain.com", "https://www.yourdomain.com")
@@ -39,20 +44,30 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Seed data in development
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var context = scope.ServiceProvider.GetRequiredService<MessageBoardContext>();
+        await SeedData.Initialize(context);
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.UseCors("DevelopmentCors");  // Use CORS in development
+    app.UseCors("DevelopmentCors");
 }
 
-app.UseHttpsRedirection();
+// COMMENT OUT HTTPS REDIRECTION FOR LOCAL DEVELOPMENT
+// app.UseHttpsRedirection();
 
-// ADD THESE FOR CONTROLLERS
 app.UseAuthorization();
 app.MapControllers();
 
-// REMOVE OR KEEP the weather forecast for now (your choice)
+// Keep weather forecast for testing
 var summaries = new[]
 {
     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"

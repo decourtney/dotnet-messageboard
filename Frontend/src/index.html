@@ -6,9 +6,30 @@
     <title>Message Board</title>
 </head>
 <body>
-    <div id="app">
+    <div id="app" class="container mt-4">
         <h1>Message Board</h1>
-        <p>Setup complete!</p>
+        
+        <!-- Messages will appear here -->
+        <div id="messages-container" class="mt-4">
+            <!-- State manager will populate this -->
+        </div>
+        
+        <!-- Simple form to test adding messages -->
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5>Add a Message</h5>
+                    <div class="mb-2">
+                        <input type="text" id="username-input" class="form-control" placeholder="Your name">
+                    </div>
+                    <div class="mb-2">
+                        <textarea id="message-input" class="form-control" placeholder="Your message" rows="3"></textarea>
+                    </div>
+                    <button id="add-message-btn" class="btn btn-primary">Add Message</button>
+                    <button id="clear-messages-btn" class="btn btn-outline-secondary ms-2">Clear All</button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
