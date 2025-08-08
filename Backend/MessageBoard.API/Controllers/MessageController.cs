@@ -1,8 +1,10 @@
+using MessageBoard.API.Data;
+using MessageBoard.API.DTOs;
+using MessageBoard.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MessageBoard.API.Data;
-using MessageBoard.API.Models;
-using MessageBoard.API.DTOs;
+using System.Security.Claims;
 
 namespace MessageBoard.API.Controllers
 {
@@ -76,10 +78,18 @@ namespace MessageBoard.API.Controllers
 
         // POST: api/messages
         [HttpPost]
+        [Authorize] // This requires a valid JWT token
         public async Task<ActionResult<Message>> PostMessage(CreateMessageRequest request)
         {
             try
             {
+                // Extract user ID from JWT token claims
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return Unauthorized("Invalid token");
+                }
+
                 // Validate the thread exists
                 var thread = await _context.Threads.FindAsync(request.ThreadId);
                 if (thread == null)
@@ -87,18 +97,19 @@ namespace MessageBoard.API.Controllers
                     return BadRequest("Thread not found");
                 }
 
-                // Validate the user exists
-                var user = await _context.Users.FindAsync(request.UserId);
+                // No need to validate user exists - they're authenticated!
+                // But we can still check if we want to be extra safe
+                var user = await _context.Users.FindAsync(userId);
                 if (user == null)
                 {
-                    return BadRequest("User not found");
+                    return Unauthorized("User not found");
                 }
 
                 var message = new Message
                 {
                     Content = request.Content,
                     ThreadId = request.ThreadId,
-                    UserId = request.UserId,
+                    UserId = userId, // From JWT token, not request body
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -112,7 +123,6 @@ namespace MessageBoard.API.Controllers
                     .FirstOrDefaultAsync(m => m.Id == message.Id);
 
                 _logger.LogInformation("Created message {Id} by user {UserId}", message.Id, message.UserId);
-
                 return CreatedAtAction(nameof(GetMessage), new { id = message.Id }, createdMessage);
             }
             catch (Exception ex)

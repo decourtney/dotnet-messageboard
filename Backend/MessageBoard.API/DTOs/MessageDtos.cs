@@ -5,6 +5,5 @@ namespace MessageBoard.API.DTOs
     {
         public required string Content { get; set; }
         public int ThreadId { get; set; }
-        public int UserId { get; set; }
     }
 }
