@@ -1,16 +1,37 @@
-// src/ts/state/AppState.ts
+/**
+ * AppState.ts
+ * ---------------------------------------------------------
+ * Centralized state manager for the Message Board app.
+ *
+ * Responsibilities:
+ * - Store and manage authentication state (token, current user).
+ * - Store and manage the message list.
+ * - Provide subscription mechanism for authentication changes.
+ * - Handle API calls for loading/creating messages and user auth.
+ * - Update the DOM with current message data and error messages.
+ *
+ * Dependencies:
+ * - apiClient: Handles HTTP calls to the backend API.
+ * - Message, User types: Data structures from the API layer.
+ *
+ * Notes:
+ * - This is a singleton — `appState` is the single instance used app-wide.
+ * - UI updates are handled directly here via `renderMessages` and `showError`.
+ * ---------------------------------------------------------
+ */
+
 import { apiClient, Message, User } from "../api/client";
 
-// Re-export types for convenience
+// Re-export types for convenience so imports can come from state layer
 export { Message, User, Thread } from "../api/client";
 
 export class AppState {
-  private _messages: Message[] = [];
-  private _token: string | null = null;
-  private _currentUser: User | null = null;
-  private _authListeners: Array<() => void> = [];
+  private _messages: Message[] = []; // In-memory message store
+  private _token: string | null = null; // JWT for authenticated requests
+  private _currentUser: User | null = null; // Logged-in user data
+  private _authListeners: Array<() => void> = []; // Auth state subscribers
 
-  // Messages getter/setter
+  // --- GETTERS ---
   get messages(): Message[] {
     return this._messages;
   }
@@ -21,9 +42,10 @@ export class AppState {
     return this._currentUser;
   }
 
-  // Auth subscription
+  // --- AUTH STATE SUBSCRIPTION ---
   onAuthChange(cb: () => void) {
     this._authListeners.push(cb);
+    // Return unsubscribe function
     return () => {
       this._authListeners = this._authListeners.filter((x) => x !== cb);
     };
@@ -32,7 +54,7 @@ export class AppState {
     this._authListeners.forEach((cb) => cb());
   }
 
-  // Message methods (unchanged except createMessage uses current user)
+  // --- MESSAGE STATE MANAGEMENT ---
   setMessages(messages: Message[]) {
     this._messages = messages;
     this.renderMessages();
@@ -55,7 +77,7 @@ export class AppState {
   }
 
   async createMessage(content: string, threadId: number): Promise<void> {
-    // Frontend validation for UX
+    // Client-side auth check before sending message
     if (!this.isAuthenticated) {
       this.showError("You must be logged in to send messages.");
       return;
@@ -63,10 +85,7 @@ export class AppState {
 
     try {
       console.log("Creating message via API...");
-      const newMessage = await apiClient.createMessage({
-        content,
-        threadId,
-      });
+      const newMessage = await apiClient.createMessage({ content, threadId });
       this.addMessage(newMessage);
     } catch (error) {
       console.error("Failed to create message:", error);
@@ -94,16 +113,20 @@ export class AppState {
     this.renderMessages();
   }
 
-  // AUTH methods:
+  // --- AUTHENTICATION ---
   async login(username: string, password: string): Promise<boolean> {
     try {
       const res = await apiClient.login({ username, password });
       if (!res?.token || !res?.user) throw new Error("Invalid login response");
+
       this._token = res.token;
       this._currentUser = res.user;
       apiClient.setAuthToken(this._token);
+
+      // Auto-logout on 401 if API supports it
       if (apiClient.onUnauthorized)
         apiClient.onUnauthorized(() => this.logout());
+
       this.notifyAuthChange();
       return true;
     } catch (err) {
@@ -124,8 +147,10 @@ export class AppState {
         this._token = res.token;
         this._currentUser = res.user;
         apiClient.setAuthToken(this._token);
+
         if (apiClient.onUnauthorized)
           apiClient.onUnauthorized(() => this.logout());
+
         this.notifyAuthChange();
         return true;
       }
@@ -145,7 +170,7 @@ export class AppState {
     this.notifyAuthChange();
   }
 
-  // Private UI rendering and helpers (same as before)
+  // --- PRIVATE HELPERS ---
   private renderMessages() {
     const container = document.getElementById("messages-list"); // Changed from "messages-container"
     if (!container) {
@@ -155,12 +180,14 @@ export class AppState {
 
     container.innerHTML = "";
 
+    // Empty state
     if (this._messages.length === 0) {
       container.innerHTML =
         '<div class="text-muted">No messages yet. Be the first to start the conversation!</div>';
       return;
     }
 
+    // Render each message card
     this._messages.forEach((message) => {
       const messageDiv = document.createElement("div");
       messageDiv.className = "card mb-2";
@@ -196,6 +223,7 @@ export class AppState {
 
     container.insertBefore(errorDiv, container.firstChild);
 
+    // Auto-remove after 5s
     setTimeout(() => {
       if (errorDiv.parentNode) {
         errorDiv.parentNode.removeChild(errorDiv);
@@ -204,5 +232,5 @@ export class AppState {
   }
 }
 
-// singleton
+// Singleton instance for use across app
 export const appState = new AppState();

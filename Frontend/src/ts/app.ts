@@ -1,44 +1,78 @@
+/**
+ * app.ts
+ *
+ * Entry point for the Message Board frontend.
+ *
+ * Responsibilities:
+ *  - Initialize the application once the DOM is ready
+ *  - Test API connectivity, load real or fallback (sample) messages
+ *  - Manage authentication UI and API calls (login, register, logout)
+ *  - Handle adding/clearing messages
+ *  - Reactively update UI when authentication state changes
+ *
+ * Dependencies:
+ *  - SCSS styles from ../scss/main.scss
+ *  - AppState singleton from ./state/AppState for global state + API interactions
+ *
+ * Notes:
+ *  - `updateUIForAuthState()` expects specific element IDs:
+ *    login-section, register-section, user-section, message-form
+ *    These do NOT currently match the IDs in index.html. You need to rename them or adjust here.
+ */
+
 import "../scss/main.scss";
 import { appState } from "./state/AppState";
 
 console.log("Message Board app loaded!");
 
-// Initialize the app
+// Initialize the app after DOM is ready
 document.addEventListener("DOMContentLoaded", () => {
   initializeApp();
 });
 
+/**
+ * Initializes the application:
+ *  - Verifies API connectivity
+ *  - Loads messages (real or fallback sample)
+ *  - Sets up authentication and message form UI handlers
+ *  - Subscribes to authentication state changes
+ *  - Triggers initial UI update
+ */
 async function initializeApp() {
   console.log("Initializing app...");
 
-  // Test API connection first
+  // Check if API is reachable
   const apiConnected = await appState.testApiConnection();
+
   if (apiConnected) {
-    // Try to load real messages from API
+    // Load real messages from the API
     await appState.loadMessages();
   } else {
-    // Fall back to sample data if API is not available
+    // Use sample/fallback data if API is unavailable
     console.log("API not available, loading sample data...");
     loadSampleMessages();
   }
 
-  // Set up auth state management
+  // Wire up authentication UI
   setupAuthUI();
 
-  // Set up form handling
+  // Wire up message form
   setupMessageForm();
 
-  // Listen for auth changes to update UI
+  // Re-render parts of the UI when authentication state changes
   appState.onAuthChange(() => {
     updateUIForAuthState();
   });
 
-  // Initial UI update
+  // Run an initial UI update
   updateUIForAuthState();
 }
 
+/**
+ * Loads a fixed set of sample messages into state.
+ * Used as a fallback when the backend API is not reachable.
+ */
 function loadSampleMessages() {
-  // Fake data that matches the API structure
   const sampleMessages = [
     {
       id: 1,
@@ -68,12 +102,17 @@ function loadSampleMessages() {
     },
   ];
 
-  // This will automatically render the messages
   appState.setMessages(sampleMessages);
 }
 
+/**
+ * Sets up event listeners for authentication UI:
+ *  - Login button
+ *  - Registration button
+ *  - Logout button
+ */
 function setupAuthUI() {
-  // Login form handler
+  // ----- Login -----
   const loginBtn = document.getElementById("login-btn");
   const loginUsernameInput = document.getElementById(
     "login-username"
@@ -96,13 +135,12 @@ function setupAuthUI() {
 
     if (success) {
       console.log("Login successful!");
-      // Clear login form
-      if (loginUsernameInput) loginUsernameInput.value = "";
-      if (loginPasswordInput) loginPasswordInput.value = "";
+      loginUsernameInput.value = "";
+      loginPasswordInput.value = "";
     }
   });
 
-  // Register form handler
+  // ----- Registration -----
   const registerBtn = document.getElementById("register-btn");
   const registerUsernameInput = document.getElementById(
     "register-username"
@@ -129,14 +167,13 @@ function setupAuthUI() {
 
     if (success) {
       console.log("Registration successful!");
-      // Clear register form
-      if (registerUsernameInput) registerUsernameInput.value = "";
-      if (registerEmailInput) registerEmailInput.value = "";
-      if (registerPasswordInput) registerPasswordInput.value = "";
+      registerUsernameInput.value = "";
+      registerEmailInput.value = "";
+      registerPasswordInput.value = "";
     }
   });
 
-  // Logout handler
+  // ----- Logout -----
   const logoutBtn = document.getElementById("logout-btn");
   logoutBtn?.addEventListener("click", () => {
     console.log("Logging out...");
@@ -144,6 +181,11 @@ function setupAuthUI() {
   });
 }
 
+/**
+ * Sets up event listeners for the message form:
+ *  - Add message
+ *  - Clear messages
+ */
 function setupMessageForm() {
   const addBtn = document.getElementById("add-message-btn");
   const clearBtn = document.getElementById("clear-messages-btn");
@@ -151,6 +193,7 @@ function setupMessageForm() {
     "message-input"
   ) as HTMLTextAreaElement;
 
+  // Add new message
   addBtn?.addEventListener("click", async () => {
     const content = messageInput?.value.trim();
 
@@ -165,12 +208,9 @@ function setupMessageForm() {
     }
 
     try {
-      // Use the real authenticated API call
-      await appState.createMessage(content, 1); // Using threadId = 1 for now
-
-      // Clear the form
-      if (messageInput) messageInput.value = "";
-
+      // Send message to API (threadId fixed as 1 for now)
+      await appState.createMessage(content, 1);
+      messageInput.value = "";
       console.log("Message sent successfully!");
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -178,31 +218,34 @@ function setupMessageForm() {
     }
   });
 
+  // Clear all messages
   clearBtn?.addEventListener("click", () => {
     appState.clearMessages();
     console.log("Cleared all messages");
   });
 }
 
+/**
+ * Updates visibility of login/register forms, user info, and message form
+ * based on current authentication state.
+ */
 function updateUIForAuthState() {
   const isAuthenticated = appState.isAuthenticated;
   const currentUser = appState.currentUser;
 
-  // Show/hide login/register forms
   const loginSection = document.getElementById("login-section");
   const registerSection = document.getElementById("register-section");
   const userSection = document.getElementById("user-section");
   const messageForm = document.getElementById("message-form");
 
   if (isAuthenticated && currentUser) {
-    // User is logged in
     console.log(`User logged in: ${currentUser.username}`);
 
     // Hide auth forms
     if (loginSection) loginSection.style.display = "none";
     if (registerSection) registerSection.style.display = "none";
 
-    // Show user info and message form
+    // Show user info + message form
     if (userSection) {
       userSection.style.display = "block";
       const userInfo = document.getElementById("current-user-info");
@@ -212,14 +255,13 @@ function updateUIForAuthState() {
     }
     if (messageForm) messageForm.style.display = "block";
   } else {
-    // User is not logged in
     console.log("User not logged in");
 
     // Show auth forms
     if (loginSection) loginSection.style.display = "block";
     if (registerSection) registerSection.style.display = "block";
 
-    // Hide user section and message form
+    // Hide user info + message form
     if (userSection) userSection.style.display = "none";
     if (messageForm) messageForm.style.display = "none";
   }

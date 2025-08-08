@@ -31,8 +31,8 @@ namespace MessageBoard.API.Controllers
 
                 IQueryable<Message> query = _context.Messages
                     .Include(m => m.User)           // Include user data
-                    .Include(m => m.Thread)         // Include thread data
-                    .OrderByDescending(m => m.CreatedAt);  // Newest first
+                    .Include(m => m.Thread);         // Include thread data
+                    // .OrderByDescending(m => m.CreatedAt);  // Newest first
 
                 if (threadId.HasValue)
                 {
