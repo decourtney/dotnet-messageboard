@@ -1,13 +1,338 @@
-// Import Bootstrap
-@use '~bootstrap/scss/bootstrap';
+// Import Bootstrap first (you can customize Bootstrap variables here if needed)
+@use "bootstrap/scss/bootstrap";
 
-// Custom styles
-body {
-    background-color: #f8f9fa;
+// SCSS Variables - define your custom colors and spacing
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+$message-accent: #007bff;
+$border-radius-custom: 12px;
+$shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.1);
+$transition-smooth: all 0.3s ease;
+
+// Mixins - reusable SCSS patterns
+@mixin gradient-background($gradient) {
+  background: $gradient;
+  background-size: 200% 200%;
+  animation: gradientShift 6s ease infinite;
 }
 
-#app {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 2rem;
+@mixin card-hover {
+  transition: $transition-smooth;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  }
+}
+
+// Keyframes for animations
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// Base styles
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+// Header styles
+.display-4 {
+  font-weight: 700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  
+  // Nested SCSS - one of the key features!
+  &.text-primary {
+    @include gradient-background($primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+// Auth card styling
+.auth-card {
+  max-width: 400px;
+  margin: 0 auto 2rem auto;
+  animation: fadeIn 0.8s ease-out;
+  
+  .card {
+    @include card-hover;
+    border: none;
+    border-radius: $border-radius-custom;
+    overflow: hidden;
+    box-shadow: $shadow-soft;
+    
+    .card-header {
+      border: none;
+      padding: 1.5rem;
+      
+      // Conditional styling based on classes
+      &.bg-primary {
+        @include gradient-background($primary-gradient);
+      }
+      
+      &.bg-success {
+        @include gradient-background($success-gradient);
+      }
+      
+      .card-title {
+        font-weight: 600;
+        font-size: 1.2rem;
+      }
+    }
+    
+    .card-body {
+      padding: 2rem;
+      
+      .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.8rem 1rem;
+        font-size: 0.95rem;
+        transition: $transition-smooth;
+        
+        &:focus {
+          border-color: $message-accent;
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+          transform: translateY(-1px);
+        }
+        
+        // Placeholder styling
+        &::placeholder {
+          color: #6c757d;
+          opacity: 0.7;
+        }
+      }
+      
+      .btn {
+        border-radius: 8px;
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: $transition-smooth;
+        
+        &:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+      }
+    }
+  }
+}
+
+// User section styling
+#user-section {
+  text-align: center;
+  margin-bottom: 2rem;
+  animation: fadeIn 0.6s ease-out;
+  
+  .user-badge {
+    @include gradient-background($primary-gradient);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    display: inline-block;
+    font-weight: 600;
+    font-size: 1.1rem;
+    box-shadow: $shadow-soft;
+    margin-bottom: 1rem;
+    
+    // SCSS nesting with pseudo-elements
+    &::before {
+      content: "👋 ";
+      margin-right: 0.5rem;
+    }
+  }
+}
+
+// Message form styling
+#message-form {
+  .card {
+    @include card-hover;
+    border: none;
+    border-radius: $border-radius-custom;
+    box-shadow: $shadow-soft;
+    
+    .card-header {
+      background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+      border: none;
+      padding: 1.5rem;
+      
+      .card-title {
+        color: #495057;
+        font-weight: 600;
+        
+        &::before {
+          content: "✍️ ";
+          margin-right: 0.5rem;
+        }
+      }
+    }
+    
+    .card-body {
+      padding: 2rem;
+      
+      #message-input {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        resize: vertical;
+        min-height: 100px;
+        transition: $transition-smooth;
+        
+        &:focus {
+          border-color: $message-accent;
+          box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.15);
+        }
+      }
+      
+      .btn {
+        border-radius: 8px;
+        font-weight: 600;
+        padding: 0.7rem 1.5rem;
+        transition: $transition-smooth;
+        
+        &:hover {
+          transform: translateY(-1px);
+        }
+        
+        // Button-specific styles using SCSS nesting
+        &#add-message-btn {
+          background: $primary-gradient;
+          border: none;
+          
+          &:hover {
+            opacity: 0.9;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Messages container styling
+#messages-container {
+  .card {
+    border: none;
+    border-radius: $border-radius-custom;
+    box-shadow: $shadow-soft;
+    
+    .card-body {
+      padding: 0;
+      max-height: 500px;
+      overflow-y: auto;
+      
+      // Custom scrollbar styling
+      &::-webkit-scrollbar {
+        width: 8px;
+      }
+      
+      &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+      
+      &::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+        
+        &:hover {
+          background: #a8a8a8;
+        }
+      }
+      
+      // Message styling (these are dynamically generated)
+      .card {
+        margin: 1rem;
+        border-left: 4px solid $message-accent;
+        border-radius: 8px;
+        transition: $transition-smooth;
+        
+        &:hover {
+          transform: translateX(5px);
+          box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
+        }
+        
+        .card-body {
+          padding: 1rem 1.5rem;
+          
+          strong {
+            color: $message-accent;
+            font-weight: 600;
+          }
+          
+          .text-muted {
+            font-size: 0.85rem;
+            opacity: 0.7;
+          }
+          
+          p {
+            margin-top: 0.5rem;
+            margin-bottom: 0;
+            line-height: 1.5;
+            color: #495057;
+          }
+        }
+      }
+      
+      // Empty state styling
+      .text-muted {
+        text-align: center;
+        padding: 3rem;
+        font-style: italic;
+        color: #6c757d;
+        
+        &::before {
+          content: "💭 ";
+          font-size: 2rem;
+          display: block;
+          margin-bottom: 1rem;
+        }
+      }
+    }
+  }
+}
+
+// Alert/error styling (for your showError method)
+.alert {
+  border-radius: 8px;
+  font-weight: 500;
+  
+  &.alert-danger {
+    background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+    border: none;
+    color: white;
+    
+    .btn-close {
+      filter: invert(1);
+    }
+  }
+}
+
+// Responsive design with SCSS
+@media (max-width: 768px) {
+  .auth-card {
+    margin: 0 1rem 2rem 1rem;
+    max-width: none;
+  }
+  
+  .container {
+    padding: 1rem;
+  }
+  
+  .display-4 {
+    font-size: 2rem;
+  }
+  
+  #message-form .card-body {
+    padding: 1rem;
+  }
 }

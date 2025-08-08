@@ -21,39 +21,83 @@ export interface Message {
   threadId: number;
   userId: number;
   user: User;
-  thread?: Thread;
   createdAt: string;
 }
 
+// Auth DTOs that match your C# DTOs
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  message: string;
+  token?: string;
+  user?: User;
+}
+
 // API configuration
-const API_BASE_URL = "http://localhost:5285"; // Replace with your actual port
+const API_BASE_URL = "http://localhost:5285";
 
 class ApiClient {
   private baseUrl: string;
+  private _token: string | undefined;
+  private _onUnauthorized: (() => void) | undefined;
 
   constructor(baseUrl: string) {
     this.baseUrl = baseUrl;
   }
 
-  // Generic HTTP method
+  // Token management
+  setAuthToken(token: string | undefined) {
+    this._token = token;
+  }
+
+  onUnauthorized(callback: () => void) {
+    this._onUnauthorized = callback;
+  }
+
+  // Generic HTTP method with auth support
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
 
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...(options.headers as Record<string, string>),
+    };
+
+    // Add Authorization header if we have a token
+    if (this._token) {
+      headers.Authorization = `Bearer ${this._token}`;
+    }
+
     const config: RequestInit = {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
       ...options,
     };
 
     try {
       console.log(`API Request: ${config.method || "GET"} ${url}`);
-
       const response = await fetch(url, config);
+
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        console.log("Unauthorized - calling logout callback");
+        if (this._onUnauthorized) {
+          this._onUnauthorized();
+        }
+        throw new Error("Unauthorized");
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,6 +110,21 @@ class ApiClient {
       console.error(`API Error for ${endpoint}:`, error);
       throw error;
     }
+  }
+
+  // Authentication endpoints
+  async register(userData: RegisterRequest): Promise<AuthResponse> {
+    return this.request<AuthResponse>("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async login(credentials: LoginRequest): Promise<AuthResponse> {
+    return this.request<AuthResponse>("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    });
   }
 
   // Test connection (using the weather endpoint)
@@ -107,7 +166,7 @@ class ApiClient {
     return this.request<Thread>(`/api/threads/${id}`);
   }
 
-  // Message endpoints (for when you add MessageController)
+  // Message endpoints - UPDATED: removed userId from createMessage
   async getMessages(threadId?: number): Promise<Message[]> {
     const endpoint = threadId
       ? `/api/messages?threadId=${threadId}`
@@ -115,10 +174,10 @@ class ApiClient {
     return this.request<Message[]>(endpoint);
   }
 
+  // Updated: no userId needed - backend gets it from JWT token
   async createMessage(messageData: {
     content: string;
     threadId: number;
-    userId: number;
   }): Promise<Message> {
     return this.request<Message>("/api/messages", {
       method: "POST",

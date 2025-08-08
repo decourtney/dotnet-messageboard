@@ -1,31 +1,48 @@
 // src/ts/state/AppState.ts
-import { apiClient, Message } from "../api/client";
+import { apiClient, Message, User } from "../api/client";
 
 // Re-export types for convenience
 export { Message, User, Thread } from "../api/client";
 
 export class AppState {
-  // Private property - only this class can modify it directly
   private _messages: Message[] = [];
+  private _token: string | null = null;
+  private _currentUser: User | null = null;
+  private _authListeners: Array<() => void> = [];
 
-  // Public getter - other code can READ but not modify directly
+  // Messages getter/setter
   get messages(): Message[] {
     return this._messages;
   }
+  get isAuthenticated(): boolean {
+    return !!this._token && !!this._currentUser;
+  }
+  get currentUser(): User | null {
+    return this._currentUser;
+  }
 
-  // Method to update messages - this is like React's setState
+  // Auth subscription
+  onAuthChange(cb: () => void) {
+    this._authListeners.push(cb);
+    return () => {
+      this._authListeners = this._authListeners.filter((x) => x !== cb);
+    };
+  }
+  private notifyAuthChange() {
+    this._authListeners.forEach((cb) => cb());
+  }
+
+  // Message methods (unchanged except createMessage uses current user)
   setMessages(messages: Message[]) {
     this._messages = messages;
-    this.renderMessages(); // Automatically update UI
+    this.renderMessages();
   }
 
-  // Method to add a single message
   addMessage(message: Message) {
     this._messages.push(message);
-    this.renderMessages(); // Automatically update UI
+    this.renderMessages();
   }
 
-  // Method to load messages from API
   async loadMessages(threadId?: number): Promise<void> {
     try {
       console.log("Loading messages from API...");
@@ -33,23 +50,22 @@ export class AppState {
       this.setMessages(messages);
     } catch (error) {
       console.error("Failed to load messages:", error);
-      // Show user-friendly error
       this.showError("Failed to load messages. Please try again.");
     }
   }
 
-  // Method to create a new message via API
-  async createMessage(
-    content: string,
-    threadId: number,
-    userId: number
-  ): Promise<void> {
+  async createMessage(content: string, threadId: number): Promise<void> {
+    // Frontend validation for UX
+    if (!this.isAuthenticated) {
+      this.showError("You must be logged in to send messages.");
+      return;
+    }
+
     try {
       console.log("Creating message via API...");
       const newMessage = await apiClient.createMessage({
         content,
         threadId,
-        userId,
       });
       this.addMessage(newMessage);
     } catch (error) {
@@ -58,7 +74,6 @@ export class AppState {
     }
   }
 
-  // Method to test API connection
   async testApiConnection(): Promise<boolean> {
     try {
       console.log("Testing API connection...");
@@ -74,51 +89,100 @@ export class AppState {
     }
   }
 
-  // Method to clear all messages
   clearMessages() {
     this._messages = [];
-    this.renderMessages(); // Automatically update UI
+    this.renderMessages();
   }
 
-  // Private method - handles updating the DOM
+  // AUTH methods:
+  async login(username: string, password: string): Promise<boolean> {
+    try {
+      const res = await apiClient.login({ username, password });
+      if (!res?.token || !res?.user) throw new Error("Invalid login response");
+      this._token = res.token;
+      this._currentUser = res.user;
+      apiClient.setAuthToken(this._token);
+      if (apiClient.onUnauthorized)
+        apiClient.onUnauthorized(() => this.logout());
+      this.notifyAuthChange();
+      return true;
+    } catch (err) {
+      console.error("Login failed:", err);
+      this.showError("Login failed. Check credentials.");
+      return false;
+    }
+  }
+
+  async register(
+    username: string,
+    email: string,
+    password: string
+  ): Promise<boolean> {
+    try {
+      const res = await apiClient.register({ username, email, password });
+      if (res?.token && res?.user) {
+        this._token = res.token;
+        this._currentUser = res.user;
+        apiClient.setAuthToken(this._token);
+        if (apiClient.onUnauthorized)
+          apiClient.onUnauthorized(() => this.logout());
+        this.notifyAuthChange();
+        return true;
+      }
+      this.showError("Account created. Please log in.");
+      return false;
+    } catch (err) {
+      console.error("Register failed:", err);
+      this.showError("Registration failed.");
+      return false;
+    }
+  }
+
+  logout() {
+    this._token = null;
+    this._currentUser = null;
+    apiClient.setAuthToken(undefined);
+    this.notifyAuthChange();
+  }
+
+  // Private UI rendering and helpers (same as before)
   private renderMessages() {
-    const container = document.getElementById("messages-container");
+    const container = document.getElementById("messages-list"); // Changed from "messages-container"
     if (!container) {
-      console.warn("Messages container not found");
+      console.warn("Messages list container not found");
       return;
     }
 
-    // Clear existing content
     container.innerHTML = "";
 
-    // If no messages, show empty state
     if (this._messages.length === 0) {
-      container.innerHTML = '<p class="text-muted">No messages yet.</p>';
+      container.innerHTML =
+        '<div class="text-muted">No messages yet. Be the first to start the conversation!</div>';
       return;
     }
 
-    // Render each message
     this._messages.forEach((message) => {
       const messageDiv = document.createElement("div");
       messageDiv.className = "card mb-2";
       messageDiv.innerHTML = `
-        <div class="card-body">
-          <div class="d-flex justify-content-between">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start">
+          <div>
             <strong>${message.user.username}</strong>
-            <small class="text-muted">${new Date(
-              message.createdAt
-            ).toLocaleString()}</small>
+            <p class="mb-0 mt-1">${message.content}</p>
           </div>
-          <p class="mb-0 mt-1">${message.content}</p>
+          <small class="text-muted">${new Date(
+            message.createdAt
+          ).toLocaleString()}</small>
         </div>
-      `;
+      </div>
+    `;
       container.appendChild(messageDiv);
     });
 
     console.log(`Rendered ${this._messages.length} messages`);
   }
 
-  // Helper method to show errors to user
   private showError(message: string) {
     const container = document.getElementById("messages-container");
     if (!container) return;
@@ -130,10 +194,8 @@ export class AppState {
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     `;
 
-    // Insert at the top
     container.insertBefore(errorDiv, container.firstChild);
 
-    // Auto-remove after 5 seconds
     setTimeout(() => {
       if (errorDiv.parentNode) {
         errorDiv.parentNode.removeChild(errorDiv);
@@ -142,5 +204,5 @@ export class AppState {
   }
 }
 
-// Create and export a single instance (singleton pattern)
+// singleton
 export const appState = new AppState();
