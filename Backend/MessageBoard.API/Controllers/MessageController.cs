@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MessageBoard.API.Data;
 using MessageBoard.API.Models;
+using MessageBoard.API.DTOs;
 
 namespace MessageBoard.API.Controllers
 {
@@ -75,19 +76,19 @@ namespace MessageBoard.API.Controllers
 
         // POST: api/messages
         [HttpPost]
-        public async Task<ActionResult<Message>> PostMessage(CreateMessageDto createMessageDto)
+        public async Task<ActionResult<Message>> PostMessage(CreateMessageRequest request)
         {
             try
             {
                 // Validate the thread exists
-                var thread = await _context.Threads.FindAsync(createMessageDto.ThreadId);
+                var thread = await _context.Threads.FindAsync(request.ThreadId);
                 if (thread == null)
                 {
                     return BadRequest("Thread not found");
                 }
 
                 // Validate the user exists
-                var user = await _context.Users.FindAsync(createMessageDto.UserId);
+                var user = await _context.Users.FindAsync(request.UserId);
                 if (user == null)
                 {
                     return BadRequest("User not found");
@@ -95,9 +96,9 @@ namespace MessageBoard.API.Controllers
 
                 var message = new Message
                 {
-                    Content = createMessageDto.Content,
-                    ThreadId = createMessageDto.ThreadId,
-                    UserId = createMessageDto.UserId,
+                    Content = request.Content,
+                    ThreadId = request.ThreadId,
+                    UserId = request.UserId,
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -145,13 +146,5 @@ namespace MessageBoard.API.Controllers
                 return StatusCode(500, "An error occurred while deleting the message");
             }
         }
-    }
-
-    // DTO for creating messages
-    public class CreateMessageDto
-    {
-        public required string Content { get; set; }
-        public int ThreadId { get; set; }
-        public int UserId { get; set; }
     }
 }
