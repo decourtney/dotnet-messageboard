@@ -29,7 +29,7 @@ A modern, full-stack message board built with TypeScript and .NET, featuring rea
 This project demonstrates progressive development:
 
 - **v1.0** (main branch): Core message board functionality - extended from .NET/TypeScript template with authentication, message management, and responsive UI
-- **v2.0** (feature/spa-expansion branch): *In development* - Scaling to full SPA with user dashboard, persistent sessions, and advanced user management
+- **v2.0** (spa-version branch): _In development_ - Scaling to full SPA with user dashboard, persistent sessions, and advanced user management
 
 Each version represents different architectural decisions and development phases.
 
@@ -38,12 +38,14 @@ Each version represents different architectural decisions and development phases
 ## 🏗️ Tech Stack
 
 ### Frontend
+
 - **TypeScript** - Type-safe JavaScript with modern ES6+ features
 - **Webpack** - Module bundling with hot reload
 - **Bootstrap 5** - Responsive CSS framework
 - **SCSS** - Enhanced styling with variables and mixins
 
 ### Backend
+
 - **.NET 7+** - High-performance web API
 - **Entity Framework Core** - Object-relational mapping
 - **MySQL** - Reliable database storage
@@ -57,20 +59,22 @@ Each version represents different architectural decisions and development phases
 
 Ensure you have these installed:
 
-| Tool | Version | Download |
-|------|---------|----------|
-| .NET SDK | 7.0+ | [Download](https://dotnet.microsoft.com/download) |
-| Node.js | 18.0+ | [Download](https://nodejs.org/) |
-| MySQL | 8.0+ | [Download](https://dev.mysql.com/downloads/mysql/) |
+| Tool     | Version | Download                                           |
+| -------- | ------- | -------------------------------------------------- |
+| .NET SDK | 7.0+    | [Download](https://dotnet.microsoft.com/download)  |
+| Node.js  | 18.0+   | [Download](https://nodejs.org/)                    |
+| MySQL    | 8.0+    | [Download](https://dev.mysql.com/downloads/mysql/) |
 
 ### 🔧 Backend Setup
 
 1. **Navigate to the API project**
+
    ```bash
    cd Backend/MessageBoard.API
    ```
 
 2. **Configure database connection**
+
    ```json
    // appsettings.json
    {
@@ -81,40 +85,46 @@ Ensure you have these installed:
    ```
 
 3. **Install EF Core tools** (if not already installed)
+
    ```bash
    dotnet tool install --global dotnet-ef
    ```
 
 4. **Setup database**
+
    ```bash
    dotnet ef migrations add InitialCreate
    dotnet ef database update
    ```
 
 5. **Start the API**
+
    ```bash
    dotnet run
    ```
-   
+
    > 🌐 API will be available at `http://localhost:5285`
 
 ### 🎨 Frontend Setup
 
 1. **Navigate to frontend directory**
+
    ```bash
    cd Frontend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
 
 3. **Start development server**
+
    ```bash
    npm run dev
    ```
-   
+
    > 🌐 App will open at `http://localhost:3000`
 
 4. **Build for production** (optional)
@@ -174,11 +184,11 @@ sequenceDiagram
 
 ## 🎯 Available Scripts
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | 🚀 Start development server with hot reload |
-| `npm run build` | 📦 Build for production |
-| `npm start` | 🌐 Start dev server and open browser |
+| Command         | Description                                 |
+| --------------- | ------------------------------------------- |
+| `npm run dev`   | 🚀 Start development server with hot reload |
+| `npm run build` | 📦 Build for production                     |
+| `npm start`     | 🌐 Start dev server and open browser        |
 
 ---
 
@@ -187,6 +197,7 @@ sequenceDiagram
 ### Adding New Features
 
 1. **Backend Changes**
+
    - Add/modify models in `Models/`
    - Create migrations: `dotnet ef migrations add YourMigrationName`
    - Update database: `dotnet ef database update`
@@ -222,6 +233,7 @@ sequenceDiagram
 
 **Problem**: EF Core can't connect to MySQL  
 **Solutions**:
+
 - Ensure MySQL service is running
 - Verify connection string credentials
 - Check firewall/port settings (default: 3306)
@@ -233,6 +245,7 @@ sequenceDiagram
 
 **Problem**: Webpack or .NET build errors  
 **Solutions**:
+
 - Clear node_modules: `rm -rf node_modules && npm install`
 - Clean .NET: `dotnet clean && dotnet restore`
 - Check for TypeScript/C# syntax errors
@@ -244,6 +257,7 @@ sequenceDiagram
 
 **Problem**: Login/register not working  
 **Solutions**:
+
 - Check browser console for errors
 - Verify API endpoints are responding
 - Ensure database has proper user table structure
@@ -262,17 +276,18 @@ This application is designed to be easily deployable:
 
 ### Recommended Hosting Options
 
-| Component | Platform Options |
-|-----------|------------------|
-| Frontend | Netlify, Vercel, GitHub Pages |
-| Backend | Azure App Service, Heroku, Railway |
-| Database | PlanetScale, Azure MySQL, AWS RDS |
+| Component | Platform Options                   |
+| --------- | ---------------------------------- |
+| Frontend  | Netlify, Vercel, GitHub Pages      |
+| Backend   | Azure App Service, Heroku, Railway |
+| Database  | PlanetScale, Azure MySQL, AWS RDS  |
 
 ---
 
 ## 🎯 Roadmap
 
 ### 🔄 Upcoming Features
+
 - [ ] **Multi-thread Support** - Create and manage multiple conversation threads
 - [ ] **Message Reactions** - Like, dislike, and emoji reactions
 - [ ] **User Profiles** - Avatar uploads and profile customization
@@ -281,6 +296,7 @@ This application is designed to be easily deployable:
 - [ ] **Admin Panel** - User management and moderation tools
 
 ### 🔧 Technical Improvements
+
 - [ ] **Persistent Sessions** - Secure token storage
 - [ ] **Message Pagination** - Handle large message datasets
 - [ ] **Image Uploads** - File attachment support
@@ -301,6 +317,7 @@ We welcome contributions! Here's how to get started:
 5. **Open** a Pull Request
 
 ### Development Guidelines
+
 - Follow existing code style and patterns
 - Add comments for complex logic
 - Update documentation for new features
