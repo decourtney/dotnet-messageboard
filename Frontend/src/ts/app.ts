@@ -187,11 +187,27 @@ function setupAuthUI() {
  *  - Clear messages
  */
 function setupMessageForm() {
+  const header = document.getElementById("messages-container-header");
   const addBtn = document.getElementById("add-message-btn");
   const clearBtn = document.getElementById("clear-messages-btn");
   const messageInput = document.getElementById(
     "message-input"
   ) as HTMLTextAreaElement;
+  const sortToggleBtn = document.createElement("button");
+
+  // Create sort button from state
+  if (header) {
+    console.log("Creating sort button...");
+    sortToggleBtn.id = "sort-toggle-btn";
+    sortToggleBtn.className = "btn btn-sm btn-outline-secondary";
+
+    const sortOrder = appState.sortOrder;
+    sortToggleBtn.textContent =
+      sortOrder === "desc" ? "↓ Newest First" : "↑ Oldest First";
+
+    // Add to DOM
+    header.appendChild(sortToggleBtn);
+  }
 
   // Add new message
   addBtn?.addEventListener("click", async () => {
@@ -224,22 +240,17 @@ function setupMessageForm() {
     console.log("Cleared all messages");
   });
 
-  // Sort toggle button
-  let currentSortOrder: "asc" | "desc" = "desc";
-
-  const sortToggleBtn = document.getElementById("sort-toggle-btn");
+  // Toggle sort order
   sortToggleBtn?.addEventListener("click", () => {
     // Toggle the local state
-    currentSortOrder = currentSortOrder === "desc" ? "asc" : "desc";
+    const newSortOrder = appState.sortOrder === "desc" ? "asc" : "desc";
 
-    // Tell AppState to use the new sort order
-    appState.setSortOrder(currentSortOrder);
+    // Update AppState
+    appState.setSortOrder(newSortOrder);
 
     // Update button text
-    if (sortToggleBtn) {
-      sortToggleBtn.textContent =
-        currentSortOrder === "desc" ? "↓ Newest First" : "↑ Oldest First";
-    }
+    sortToggleBtn.textContent =
+      appState.sortOrder === "desc" ? "↓ Newest First" : "↑ Oldest First";
   });
 }
 

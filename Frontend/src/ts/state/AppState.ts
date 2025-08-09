@@ -31,6 +31,11 @@ export class AppState {
   private _currentUser: User | null = null; // Logged-in user data
   private _authListeners: Array<() => void> = []; // Auth state subscribers
   private _sortOrder: "asc" | "desc" = "desc"; // Message sort order
+  private _tokenExpiry: Date | null = null;
+
+  constructor() {
+    this.loadPersistedAuth(); // Load any persisted auth state on init
+  }
 
   // --- GETTERS ---
   get messages(): Message[] {
@@ -42,6 +47,9 @@ export class AppState {
   get currentUser(): User | null {
     return this._currentUser;
   }
+  get sortOrder(): "asc" | "desc" {
+    return this._sortOrder;
+  }
 
   // --- AUTH STATE SUBSCRIPTION ---
   onAuthChange(cb: () => void) {
@@ -51,8 +59,113 @@ export class AppState {
       this._authListeners = this._authListeners.filter((x) => x !== cb);
     };
   }
+
+  // --- AUTH TOKEN MANAGEMENT ---
   private notifyAuthChange() {
     this._authListeners.forEach((cb) => cb());
+  }
+
+  // --- AUTH PERSISTENCE ---
+  private loadPersistedAuth() {
+    const token = localStorage.getItem("auth_token");
+    const tokenExpiry = localStorage.getItem("token_expiry");
+    const userData = localStorage.getItem("current_user");
+
+    if (token && tokenExpiry && new Date(tokenExpiry) > new Date()) {
+      this._token = token;
+      this._tokenExpiry = new Date(tokenExpiry);
+      this._currentUser = userData ? JSON.parse(userData) : null;
+
+      // Validate token is still good with server
+      this.validateStoredToken();
+    } else {
+      // Clean up expired/invalid data
+      this.clearPersistedAuth();
+    }
+  }
+
+  // NOTE: Temporary token validation approach
+  // Validate Stored Token
+  private async validateStoredToken() {
+    try {
+      // Temp token validation: try to make an authenticated request
+      await apiClient.getMessages(); // Any authenticated endpoint
+      // If no error, token is valid
+    } catch (error) {
+      // If 401 or network error, logout
+      this.logout();
+    }
+  }
+
+  // Clear persisted auth data from localStorage
+  private clearPersistedAuth() {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("token_expiry");
+    localStorage.removeItem("current_user");
+  }
+
+  // --- AUTHENTICATION ---
+  async login(username: string, password: string): Promise<boolean> {
+    try {
+      const res = await apiClient.login({ username, password });
+      if (!res?.token || !res?.user) throw new Error("Invalid login response");
+
+      this._token = res.token;
+      this._currentUser = res.user;
+      this._tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h
+
+      // Persist to localStorage
+      localStorage.setItem("auth_token", this._token);
+      localStorage.setItem("token_expiry", this._tokenExpiry.toISOString());
+      localStorage.setItem("current_user", JSON.stringify(this._currentUser));
+
+      apiClient.setAuthToken(this._token);
+
+      if (apiClient.onUnauthorized)
+        apiClient.onUnauthorized(() => this.logout());
+
+      this.notifyAuthChange();
+      return true;
+    } catch (err) {
+      console.error("Login failed:", err);
+      this.showError("Login failed. Check credentials.");
+      return false;
+    }
+  }
+
+  logout() {
+    this._token = null;
+    this._currentUser = null;
+    this._tokenExpiry = null;
+    this.clearPersistedAuth();
+    this.notifyAuthChange();
+  }
+
+  async register(
+    username: string,
+    email: string,
+    password: string
+  ): Promise<boolean> {
+    try {
+      const res = await apiClient.register({ username, email, password });
+      if (res?.token && res?.user) {
+        this._token = res.token;
+        this._currentUser = res.user;
+        apiClient.setAuthToken(this._token);
+
+        if (apiClient.onUnauthorized)
+          apiClient.onUnauthorized(() => this.logout());
+
+        this.notifyAuthChange();
+        return true;
+      }
+      this.showError("Account created. Please log in.");
+      return false;
+    } catch (err) {
+      console.error("Register failed:", err);
+      this.showError("Registration failed.");
+      return false;
+    }
   }
 
   // --- MESSAGE STATE MANAGEMENT ---
@@ -117,63 +230,6 @@ export class AppState {
   clearMessages() {
     this._messages = [];
     this.renderMessages();
-  }
-
-  // --- AUTHENTICATION ---
-  async login(username: string, password: string): Promise<boolean> {
-    try {
-      const res = await apiClient.login({ username, password });
-      if (!res?.token || !res?.user) throw new Error("Invalid login response");
-
-      this._token = res.token;
-      this._currentUser = res.user;
-      apiClient.setAuthToken(this._token);
-
-      // Auto-logout on 401 if API supports it
-      if (apiClient.onUnauthorized)
-        apiClient.onUnauthorized(() => this.logout());
-
-      this.notifyAuthChange();
-      return true;
-    } catch (err) {
-      console.error("Login failed:", err);
-      this.showError("Login failed. Check credentials.");
-      return false;
-    }
-  }
-
-  async register(
-    username: string,
-    email: string,
-    password: string
-  ): Promise<boolean> {
-    try {
-      const res = await apiClient.register({ username, email, password });
-      if (res?.token && res?.user) {
-        this._token = res.token;
-        this._currentUser = res.user;
-        apiClient.setAuthToken(this._token);
-
-        if (apiClient.onUnauthorized)
-          apiClient.onUnauthorized(() => this.logout());
-
-        this.notifyAuthChange();
-        return true;
-      }
-      this.showError("Account created. Please log in.");
-      return false;
-    } catch (err) {
-      console.error("Register failed:", err);
-      this.showError("Registration failed.");
-      return false;
-    }
-  }
-
-  logout() {
-    this._token = null;
-    this._currentUser = null;
-    apiClient.setAuthToken(undefined);
-    this.notifyAuthChange();
   }
 
   // --- PRIVATE HELPERS ---
