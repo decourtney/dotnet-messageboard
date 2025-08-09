@@ -258,6 +258,15 @@ body {
       max-height: 500px;
       overflow-y: auto;
 
+       #sort-toggle-btn {
+        display: inline-block !important;
+        visibility: visible !important;
+        background: red !important; /* Temporary - to see if it appears */
+        color: white !important;
+        padding: 5px 10px !important;
+        border: 1px solid black !important;
+      }
+
       // Custom scrollbar styling
       &::-webkit-scrollbar {
         width: 8px;
