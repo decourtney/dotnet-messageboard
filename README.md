@@ -20,7 +20,18 @@ A modern, full-stack message board built with TypeScript and .NET, featuring rea
 🎨 **Modern UI** - Beautiful, responsive design with smooth animations  
 📱 **Mobile-First** - Optimized for all screen sizes  
 🛡️ **Error Handling** - Graceful fallbacks and user feedback  
-⚡ **Performance** - Efficient state management and rendering  
+⚡ **Performance** - Efficient state management and rendering
+
+---
+
+## 📈 Project Evolution
+
+This project demonstrates progressive development:
+
+- **v1.0** (main branch): Core message board functionality - extended from .NET/TypeScript template with authentication, message management, and responsive UI
+- **v2.0** (feature/spa-expansion branch): *In development* - Scaling to full SPA with user dashboard, persistent sessions, and advanced user management
+
+Each version represents different architectural decisions and development phases.
 
 ---
 
