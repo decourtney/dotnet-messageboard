@@ -1,14 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Message Board</title>
-</head>
-<body>
-    <div id="app">
-        <h1>Message Board</h1>
-        <p>Setup complete!</p>
+    <!-- CSS handled by build system via TypeScript imports -->
+  </head>
+  <body>
+    <div class="container mt-5">
+      <!-- Main Header -->
+      <div class="text-center mb-5">
+        <h1 class="display-4 text-primary">Message Board</h1>
+        <p class="lead text-muted">Connect and share your thoughts</p>
+      </div>
+
+      <!-- Login Section -->
+      <div class="auth-section">
+        <div id="login-section" class="auth-card">
+          <div class="card">
+            <div class="card-header bg-primary text-white text-center">
+              <h3 class="card-title mb-0">Welcome Back</h3>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <input
+                  id="login-username"
+                  class="form-control"
+                  placeholder="Username"
+                  type="text"
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  id="login-password"
+                  class="form-control"
+                  type="password"
+                  placeholder="Password"
+                />
+              </div>
+              <div class="d-grid">
+                <button id="login-btn" class="btn btn-primary">Login</button>
+              </div>
+              <div class="text-center mt-3">
+                <small class="text-muted">
+                  Don't have an account?
+                  <a href="#" id="show-register" class="text-decoration-none"
+                    >Sign up here</a
+                  >
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-divider">- or -</div>
+
+        <!-- Register Section -->
+        <div id="register-section" class="auth-card">
+          <div class="card">
+            <div class="card-header bg-success text-white text-center">
+              <h3 class="card-title mb-0">Create Account</h3>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <input
+                  id="register-username"
+                  class="form-control"
+                  placeholder="Choose a username"
+                  type="text"
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  id="register-email"
+                  class="form-control"
+                  placeholder="Email address"
+                  type="email"
+                />
+              </div>
+              <div class="mb-3">
+                <input
+                  id="register-password"
+                  class="form-control"
+                  type="password"
+                  placeholder="Create a password"
+                />
+              </div>
+              <div class="d-grid">
+                <button id="register-btn" class="btn btn-success">
+                  Create Account
+                </button>
+              </div>
+              <div class="text-center mt-3">
+                <small class="text-muted">
+                  Already have an account?
+                  <a href="#" id="show-login" class="text-decoration-none"
+                    >Login here</a
+                  >
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Section (shown when logged in) -->
+      <div id="user-section" style="display: none">
+        <div class="user-badge">
+          <span id="current-user-info"></span>
+        </div>
+        <div class="text-center">
+          <button id="logout-btn" class="btn btn-outline-secondary">
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- Message Form (only shown when authenticated) -->
+      <div id="message-form" style="display: none" class="mb-4">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="card-title mb-0">Share Your Thoughts</h5>
+          </div>
+          <div class="card-body">
+            <div class="mb-3">
+              <textarea
+                id="message-input"
+                class="form-control"
+                placeholder="What's on your mind? Share your thoughts with the community..."
+                rows="4"
+              ></textarea>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="add-message-btn" class="btn btn-primary flex-fill">
+                <i class="bi bi-send me-1"></i>Post Message
+              </button>
+              <button id="clear-messages-btn" class="btn btn-outline-secondary">
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Container -->
+      <div id="messages-container" class="mt-4">
+        <div class="card">
+          <div
+            class="card-header bg-light d-flex justify-content-between align-items-center"
+          >
+            <h5 class="mb-0">
+              <i class="bi bi-chat-dots me-2">Community Messages</i>
+            </h5>
+            <button
+              id="sort-toggle-btn"
+              class="btn btn-sm btn-outline-secondary"
+            >
+              ↓ Newest First
+            </button>
+          </div>
+          <div class="card-body" id="messages-list">
+            <!-- AppState will populate messages here -->
+            <div class="text-muted">Loading messages...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Alert Container -->
+      <div id="error-container" class="mt-3"></div>
     </div>
-</body>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Your bundled JavaScript (includes app.ts) -->
+    <script src="dist/bundle.js"></script>
+  </body>
 </html>
