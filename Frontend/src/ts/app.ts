@@ -223,6 +223,24 @@ function setupMessageForm() {
     appState.clearMessages();
     console.log("Cleared all messages");
   });
+
+  // Sort toggle button
+  let currentSortOrder: "asc" | "desc" = "desc";
+
+  const sortToggleBtn = document.getElementById("sort-toggle-btn");
+  sortToggleBtn?.addEventListener("click", () => {
+    // Toggle the local state
+    currentSortOrder = currentSortOrder === "desc" ? "asc" : "desc";
+
+    // Tell AppState to use the new sort order
+    appState.setSortOrder(currentSortOrder);
+
+    // Update button text
+    if (sortToggleBtn) {
+      sortToggleBtn.textContent =
+        currentSortOrder === "desc" ? "↓ Newest First" : "↑ Oldest First";
+    }
+  });
 }
 
 /**

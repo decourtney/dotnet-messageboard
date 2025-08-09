@@ -30,6 +30,7 @@ export class AppState {
   private _token: string | null = null; // JWT for authenticated requests
   private _currentUser: User | null = null; // Logged-in user data
   private _authListeners: Array<() => void> = []; // Auth state subscribers
+  private _sortOrder: "asc" | "desc" = "desc"; // Message sort order
 
   // --- GETTERS ---
   get messages(): Message[] {
@@ -55,6 +56,11 @@ export class AppState {
   }
 
   // --- MESSAGE STATE MANAGEMENT ---
+  public setSortOrder(order: "asc" | "desc") {
+    this._sortOrder = order;
+    this.renderMessages(); // Re-render with new sort
+  }
+
   setMessages(messages: Message[]) {
     this._messages = messages;
     this.renderMessages();
@@ -187,8 +193,15 @@ export class AppState {
       return;
     }
 
+    // Sort the existing messages based on current sort order
+    const sortedMessages = [...this._messages].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return this._sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+    });
+
     // Render each message card
-    this._messages.forEach((message) => {
+    sortedMessages.forEach((message) => {
       const messageDiv = document.createElement("div");
       messageDiv.className = "card mb-2";
       messageDiv.innerHTML = `
